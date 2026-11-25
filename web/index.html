@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ClaimsDesk | Payer Policy Assistant</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f4f8fc;color:#14304d}
+.wrap{display:flex;min-height:100vh}aside{width:290px;background:#163a5f;color:#eaf3fb;padding:22px;flex-shrink:0}
+aside h1{margin:0;font-size:24px}aside small{color:#c9dcee;display:block;margin:4px 0 14px;font-size:11px;letter-spacing:1.5px}
+aside p{font-size:12.5px;color:#c9dcee;line-height:1.45}
+button{border:0;border-radius:8px;padding:10px 12px;font-size:14px;cursor:pointer;width:100%;margin:6px 0;background:#eaf3fb;color:#14304d}
+button.primary{background:#2f78c4;color:#fff}input[type=file]{width:100%;font-size:12px;color:#eaf3fb}
+main{flex:1;padding:36px 32px;max-width:1000px}
+.hero{background:#e3eef9;border-left:5px solid #4a7fb5;border-radius:12px;padding:26px 30px;margin-bottom:20px}
+.hero small{font-size:12px;letter-spacing:2px;color:#33587e}.hero h2{font-size:30px;margin:8px 0;color:#163a5f}.hero p{margin:0;color:#3d5b7a}
+.stats{display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap}.stat{background:#e9f1f9;padding:12px 18px;border-radius:10px}.stat b{display:block;font-size:24px}
+.warn{background:#fff4d6;border-radius:8px;padding:10px 14px;margin:10px 0;font-size:14px}.info{background:#e3eef9;border-radius:8px;padding:12px 14px;margin:10px 0;font-size:14px}
+.msg{background:#fff;border:1px solid #dbe7f2;border-radius:12px;padding:14px 16px;margin:12px 0}.msg.user{background:#eef5fc}
+.note{font-size:12px;color:#5b7692;margin-top:6px}details{margin-top:8px;font-size:13px}summary{cursor:pointer;font-weight:600}
+form{display:flex;gap:8px;margin-top:18px}form input{flex:1;padding:12px;border:1px solid #b9cde2;border-radius:10px;font-size:15px}form button{width:auto;background:#2f78c4;color:#fff}
+.foot{font-size:12px;color:#5b7692;margin-top:24px}#err{color:#b00020;font-size:13px}
+@media(max-width:760px){.wrap{flex-direction:column}aside{width:100%}main{padding:18px}.hero h2{font-size:24px}}
+</style></head><body><div class="wrap">
+<aside><h1>ClaimsDesk</h1><small>REVENUE CYCLE • KNOWLEDGE DESK</small>
+<p><b>Your documents</b></p><input id="files" type="file" accept="application/pdf" multiple>
+<p>Text PDFs, up to 20 MB each. OCR is not included. Never upload documents containing patient health information (PHI).</p>
+<button class="primary" id="idx">Index Documents</button><button id="demo">Try a sample PDF</button>
+<button id="clear">Clear Chat</button><button id="remove">Remove Documents</button><div id="err"></div>
+<p>Runs fully in your browser. PDFs are never uploaded to a server. Nothing is saved.</p></aside>
+<main>
+<div class="hero"><small>PDF-FIRST • PAGE-CITED • PRIVATE IN YOUR BROWSER</small><h2>Healthcare Claims &amp; Payer Policy Assistant</h2><p>Find the evidence behind a claim decision. Ask your PDFs, then check the source page.</p></div>
+<div id="stats"></div><div id="intro"><h3>Start with the source, not a guess.</h3><p>Upload payer policy or claims manual PDFs and select Index Documents, or try the clearly labelled sample PDF.</p><div class="info">Ask about prior authorization, timely filing limits, denial codes, coordination of benefits, or required documents. Exact policy terms work best.</div></div>
+<div id="chat"></div>
+<form id="f"><input id="q" maxlength="1200" placeholder="Ask about the policies in your PDFs..." disabled><button id="ask" disabled>Ask</button></form>
+<div class="foot">Research aid, not billing, medical, or legal advice. A PDF can be outdated. Confirm details with the payer's current policy. Each question is searched independently; repeat policy names in follow-ups.</div>
+</main></div>
+<script type="module">
+import * as pdfjs from './vendor/pdf.min.mjs';
+pdfjs.GlobalWorkerOptions.workerSrc='./vendor/pdf.worker.min.mjs';
+const MAXF=20*1024*1024,MAXP=600,MAXC=6000;
+let index=null,stats=null,isDemo=false,msgs=[];
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const words=t=>(t.toLowerCase().match(/[\p{L}\p{N}_]+/gu)||[]);
+const grams=t=>{const s=' '+t.toLowerCase().replace(/\s+/g,' ')+' ',o=[];for(let n=3;n<=5;n++)for(let i=0;i+n<=s.length;i++)o.push(s.slice(i,i+n));return o};
+function vec(tokens){const m=new Map();for(const t of tokens)m.set(t,(m.get(t)||0)+1);return m}
+function build(chunks,fn){const tfs=chunks.map(c=>vec(fn(c.text))),df=new Map();
+ for(const tf of tfs)for(const k of tf.keys())df.set(k,(df.get(k)||0)+1);
+ const N=chunks.length,idf=new Map();for(const[k,v]of df)idf.set(k,Math.log((1+N)/(1+v))+1);
+ const docs=tfs.map(tf=>norm(tf,idf));return{idf,docs}}
+function norm(tf,idf){const v=new Map();let s=0;for(const[k,c]of tf){const i=idf.get(k);if(i===undefined)continue;const w=(1+Math.log(c))*i;v.set(k,w);s+=w*w}
+ s=Math.sqrt(s)||1;for(const[k,w]of v)v.set(k,w/s);return v}
+function dot(a,b){if(a.size>b.size)[a,b]=[b,a];let s=0;for(const[k,w]of a){const x=b.get(k);if(x)s+=w*x}return s}
+async function readPdf(name,buf){
+ if(buf.byteLength>MAXF)throw Error(name+': exceeds the 20 MB file limit.');
+ const head=new TextDecoder().decode(new Uint8Array(buf.slice(0,1024)));
+ if(!head.includes('%PDF-'))throw Error(name+': not a PDF file.');
+ let doc;try{doc=await pdfjs.getDocument({data:new Uint8Array(buf)}).promise}catch(e){throw Error(name+': could not read this PDF (password-protected or damaged).')}
+ if(doc.numPages>MAXP)throw Error(name+': exceeds '+MAXP+' pages.');
+ const chunks=[];let blank=0;
+ for(let p=1;p<=doc.numPages;p++){const pg=await doc.getPage(p),tc=await pg.getTextContent();
+  const text=tc.items.map(i=>i.str).join(' ').replace(/\s+/g,' ').trim();
+  if(!text){blank++;continue}
+  const w=text.split(' ');for(let s=0;s<w.length;s+=150){chunks.push({file:name,page:p,text:w.slice(s,s+200).join(' ')});if(chunks.length>MAXC)throw Error('Too much text. Index fewer or smaller PDFs.')}}
+ if(!chunks.length)throw Error(name+': no extractable text. Run OCR on scanned pages first.');
+ return{chunks,pages:doc.numPages,blank}}
+async function install(files,demo){
+ const names=[],all=[];let pages=0,skipped=0;
+ for(const[name,buf]of files){if(names.includes(name))throw Error('Two different files have the same name. Rename one before indexing.');
+  const r=await readPdf(name,buf);all.push(...r.chunks);pages+=r.pages;skipped+=r.blank;names.push(name);
+  if(all.length>MAXC||pages>MAXP)throw Error('Combined page/text limit exceeded. Index fewer PDFs.')}
+ if(!all.length)throw Error('Choose at least one PDF.');
+ index={chunks:all,w:build(all,words),c:build(all,grams)};stats={names,pages,chunks:all.length,skipped};isDemo=demo;msgs=[];render()}
+function search(q,k=4){if(!q.trim())return[];
+ const wq=norm(vec(words(q)),index.w.idf),cq=norm(vec(grams(q)),index.c.idf);
+ const sc=index.chunks.map((_,i)=>0.8*dot(index.w.docs[i],wq)+0.2*dot(index.c.docs[i],cq));
+ const order=sc.map((s,i)=>i).sort((a,b)=>sc[b]-sc[a]),hits=[],seen=new Set();
+ for(const i of order){if(sc[i]<0.065)break;const c=index.chunks[i],key=c.file+'|'+c.page;
+  if(!seen.has(key)){hits.push({c,s:sc[i]});seen.add(key)}if(hits.length>=k)break}
+ return hits}
+function render(){
+ const has=!!index;$('q').disabled=!has;$('ask').disabled=!has;$('intro').style.display=has?'none':'block';
+ $('stats').innerHTML=has?`<div class="stats"><div class="stat"><b>${stats.names.length}</b>Indexed documents</div><div class="stat"><b>${stats.pages}</b>PDF pages</div><div class="stat"><b>${stats.chunks}</b>Searchable passages</div></div><div class="note">Active files: ${stats.names.map(esc).join(', ')}</div>`+(stats.skipped?`<div class="warn">${stats.skipped} pages had no extractable text and were skipped. They may need OCR.</div>`:'')+(isDemo?'<div class="warn">DEMO DATA: invented training policies, not real payer policy. Upload official PDFs for real research.</div>':''):'';
+ $('chat').innerHTML=msgs.map(m=>`<div class="msg ${m.role}">${m.role==='user'?esc(m.text):m.text}${(m.hits||[]).map((h,i)=>`<details><summary>[${i+1}] ${esc(h.c.file)} (PDF p.${h.c.page})</summary><div class="note">Physical PDF page, counted from 1.</div><p>${esc(h.c.text)}</p></details>`).join('')}</div>`).join('')}
+async function run(fn){$('err').textContent='';try{await fn()}catch(e){$('err').textContent=e.message}}
+$('idx').onclick=()=>run(async()=>{const fs=[...$('files').files];if(!fs.length)throw Error('Choose at least one PDF.');
+ await install(await Promise.all(fs.map(async f=>[f.name,await f.arrayBuffer()])),false)});
+$('demo').onclick=()=>run(async()=>{const r=await fetch('./sample-training.pdf');await install([['sample-training.pdf',await r.arrayBuffer()]],true)});
+$('clear').onclick=()=>{msgs=[];render()};
+$('remove').onclick=()=>{index=null;stats=null;msgs=[];isDemo=false;render()};
+$('f').onsubmit=e=>{e.preventDefault();const q=$('q').value.trim();if(!q||!index)return;$('q').value='';
+ msgs.push({role:'user',text:q});const hits=search(q);
+ const body=hits.length?'These passages match your question. They are extracts, not a generated explanation.'+hits.map((h,i)=>`<p><b>[${i+1}]</b> ${esc(h.c.text)}</p>`).join(''):"I couldn't find enough matching evidence in the indexed PDFs. Try the exact policy term or upload a relevant document.";
+ msgs.push({role:'assistant',text:body,hits});render()};
+render();
+</script></body></html>

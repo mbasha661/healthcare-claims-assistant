@@ -6,6 +6,10 @@ An original PDF question-answering app by Mahaboob Basha. Upload payer policy or
 
 > The screenshot and bundled sample use invented training policies, not real payer policy. Add official, current policy PDFs for actual research. This is not billing, medical, or legal advice. **Never upload documents containing patient health information (PHI).**
 
+## Live demo (Vercel)
+
+https://claimsdesk.vercel.app is a static, in-browser port (folder `web/`): PDFs are read and searched in your browser with pdf.js and never uploaded. It offers evidence-only answers. The Streamlit app (`app.py`) adds the optional Ollama and Groq modes.
+
 ## Quick start (no key, no account)
 
 Requires Python 3.10+ (tested on Python 3.10).
