@@ -1,31 +1,31 @@
-"""Generate an original, fictional PDF fixture. Not government guidance."""
+"""Generate an original, fictional PDF fixture. Not real payer policy."""
 from pathlib import Path
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import simpleSplit
 
 out = Path(__file__).resolve().parents[1] / 'docs' / 'sample-training.pdf'
 pages = [
-    ('DEMO: Seed Learning Grant',
-     'FICTIONAL TRAINING DATA - NOT A GOVERNMENT SCHEME. '
-     'The Seed Learning Grant is an invented scheme for testing this application. '
-     'Eligibility: participants must belong to the fictional Green Village Learning Club. '
-     'Benefit: a demonstration seed kit and one training session. '
-     'Application documents: club membership card and a completed training form. '
-     'Apply at the fictional Green Village Training Desk. No payment is required. '
-     'This example has no real deadline, subsidy amount, or government connection.'),
-    ('DEMO: Drip Irrigation Workshop',
-     'FICTIONAL TRAINING DATA - NOT A GOVERNMENT SCHEME. '
-     'The Drip Irrigation Workshop is a second invented scheme for software testing. '
-     'Eligibility: registered members of the fictional Water Learning Group. '
-     'Benefit: a two-day drip irrigation workshop, not an equipment subsidy. '
-     'Required documents: workshop registration form. '
-     'Apply at the fictional Water Learning Group office. '
-     'No real policy, eligibility, financial benefit, or official approval is implied.')
+    ('DEMO: Prior Authorization Policy',
+     'FICTIONAL TRAINING DATA - NOT A REAL PAYER POLICY. '
+     'The Meridian Learning Plan is an invented payer for testing this application. '
+     'Prior authorization: advanced imaging requests must include a completed fictional '
+     'authorization form and recent clinical notes from the ordering provider. '
+     'Turnaround: standard requests are reviewed within five invented business days. '
+     'Submit through the fictional Meridian Provider Learning Portal. '
+     'This example has no real coverage, deadline, or connection to any insurance plan.'),
+    ('DEMO: Timely Filing and Denial Code CO-29',
+     'FICTIONAL TRAINING DATA - NOT A REAL PAYER POLICY. '
+     'The Meridian Learning Plan is an invented payer for software testing. '
+     'Timely filing: claims must be submitted within ninety invented days from the date of service. '
+     'Denial code CO-29: the fictional code used when a claim arrives after the filing limit. '
+     'Corrected claims: resubmit with the fictional frequency code 7 within the same invented window. '
+     'Appeals: a written fictional appeal with supporting documents is required. '
+     'No real policy, coverage, financial rule, or official approval is implied.')
 ]
 c = canvas.Canvas(str(out))
-c.setTitle('Fictional Agriculture Schemes - Training Fixture')
+c.setTitle('Fictional Payer Policies - Training Fixture')
 for title, text in pages:
-    c.setFillColorRGB(.08,.24,.16); c.setFont('Helvetica-Bold', 18)
+    c.setFillColorRGB(.09,.23,.37); c.setFont('Helvetica-Bold', 18)
     c.drawString(48, 785, title)
     c.setFont('Helvetica', 11)
     y = 745

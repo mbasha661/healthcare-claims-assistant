@@ -120,7 +120,7 @@ def build_index(files: list[tuple[str, bytes]]) -> tuple[Index, dict]:
 
 def evidence_answer(hits: list[Hit]) -> str:
     if not hits:
-        return "I couldn't find enough matching evidence in the indexed PDFs. Try the exact scheme name or upload a relevant document."
+        return "I couldn't find enough matching evidence in the indexed PDFs. Try the exact policy term or upload a relevant document."
     lines = ['These passages match your question. They are extracts, not a generated explanation.']
     for i, hit in enumerate(hits, 1):
         lines.append(f'\n[{i}] {hit.chunk.text}')

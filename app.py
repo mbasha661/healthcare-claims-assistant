@@ -1,32 +1,32 @@
-"""Uzhavan: a PDF-first agriculture schemes assistant."""
+"""ClaimsDesk: a PDF-first healthcare payer policy and claims assistant."""
 from pathlib import Path
 import json
 import streamlit as st
 from dotenv import load_dotenv
-from agri.retrieval import build_index, DocumentError
-from agri.generation import generate
+from claims.retrieval import build_index, DocumentError
+from claims.generation import generate
 
 load_dotenv()
-st.set_page_config(page_title='Uzhavan | Scheme Assistant', page_icon='🌾', layout='wide')
+st.set_page_config(page_title='ClaimsDesk | Payer Policy Assistant', page_icon='🏥', layout='wide')
 st.markdown('''<style>
-.stApp {background:#f7f9f5; color:#193b2b}
-[data-testid="stSidebar"] {background:#163d2c}
+.stApp {background:#f4f8fc; color:#14304d}
+[data-testid="stSidebar"] {background:#163a5f}
 [data-testid="stSidebar"] h1,[data-testid="stSidebar"] h2,[data-testid="stSidebar"] h3,
-[data-testid="stSidebar"] p,[data-testid="stSidebar"] label {color:#eef6ed!important}
-[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {color:#d1e1d4!important}
+[data-testid="stSidebar"] p,[data-testid="stSidebar"] label {color:#eaf3fb!important}
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {color:#c9dcee!important}
 [data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] p,
-[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] small {color:#193b2b!important}
+[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] small {color:#14304d!important}
 [data-testid="stSidebar"] button {border-radius:8px}
-[data-testid="stSidebar"] button p {color:#193b2b!important}
+[data-testid="stSidebar"] button p {color:#14304d!important}
 [data-testid="stSidebar"] button[kind="primary"] p {color:#fff!important}
 .block-container {padding-top:2.5rem; max-width:1250px}
 @media (max-width:640px) {.block-container {padding-top:5rem} .hero {padding:22px} .hero h1 {font-size:28px}}
-.hero {background:#e4efdf; border-left:5px solid #729e4b; border-radius:12px; padding:28px 32px; margin-bottom:24px}
-.hero small {font-size:12px; letter-spacing:2px; color:#43653b}
-.hero h1 {font-size:34px; padding:8px 0; color:#163d2c}
-.hero p {margin:0; color:#496444; font-size:16px}
-[data-testid="stChatMessage"] {border:1px solid #e0e8dc; border-radius:12px; background:#fff}
-[data-testid="stMetric"] {background:#edf2e9; padding:12px; border-radius:10px}
+.hero {background:#e3eef9; border-left:5px solid #4a7fb5; border-radius:12px; padding:28px 32px; margin-bottom:24px}
+.hero small {font-size:12px; letter-spacing:2px; color:#33587e}
+.hero h1 {font-size:34px; padding:8px 0; color:#163a5f}
+.hero p {margin:0; color:#3d5b7a; font-size:16px}
+[data-testid="stChatMessage"] {border:1px solid #dbe7f2; border-radius:12px; background:#fff}
+[data-testid="stMetric"] {background:#e9f1f9; padding:12px; border-radius:10px}
 </style>''', unsafe_allow_html=True)
 
 for key, value in {'messages': [], 'index': None, 'stats': None, 'is_demo': False}.items():
@@ -40,13 +40,14 @@ def install(files, demo=False):
     st.session_state.update(index=index, stats=stats, is_demo=demo, messages=[])
 
 with st.sidebar:
-    st.title('Uzhavan')
-    st.caption('AGRICULTURE • KNOWLEDGE DESK')
+    st.title('ClaimsDesk')
+    st.caption('REVENUE CYCLE • KNOWLEDGE DESK')
     st.divider()
     st.subheader('Your documents')
-    uploads = st.file_uploader('Upload scheme PDFs', type=['pdf'], accept_multiple_files=True,
+    uploads = st.file_uploader('Upload policy or claims PDFs', type=['pdf'], accept_multiple_files=True,
                                help='Text PDFs, up to 20 MB each and 60 MB total. OCR is not included.')
     st.caption('Select files, then index. Uploading alone does not change the active index.')
+    st.caption('Never upload documents containing patient health information (PHI).')
     if st.button('Index Documents', type='primary', use_container_width=True):
         try:
             with st.spinner('Reading pages and building the local index...'):
@@ -80,8 +81,8 @@ with st.sidebar:
     st.caption('Session only. Nothing is saved to disk by the app. Removing documents also clears chat.')
 
 st.markdown('''<div class="hero"><small>PDF-FIRST • PAGE-CITED • FREE TO RUN LOCALLY</small>
-<h1>Tamil Nadu Agriculture Schemes Assistant</h1>
-<p>Find the evidence behind a scheme. Ask your PDFs, then check the source page.</p></div>''', unsafe_allow_html=True)
+<h1>Healthcare Claims &amp; Payer Policy Assistant</h1>
+<p>Find the evidence behind a claim decision. Ask your PDFs, then check the source page.</p></div>''', unsafe_allow_html=True)
 
 if st.session_state.stats:
     stats = st.session_state.stats
@@ -93,11 +94,11 @@ if st.session_state.stats:
     if stats['skipped']:
         st.warning(f"{stats['skipped']} pages had no extractable text and were skipped. They may need OCR.")
     if st.session_state.is_demo:
-        st.warning('DEMO DATA: invented training schemes, not government policy. Upload official PDFs for real research.')
+        st.warning('DEMO DATA: invented training policies, not real payer policy. Upload official PDFs for real research.')
 else:
     st.subheader('Start with the source, not a guess.')
-    st.write('Upload one or more scheme booklets in the sidebar and select Index Documents. Or try the clearly labelled sample PDF, no account or API key needed.')
-    st.info('Ask about eligibility, benefits, required documents, or where to apply. Exact scheme names work best with local search.')
+    st.write('Upload one or more payer policy or claims manual PDFs in the sidebar and select Index Documents. Or try the clearly labelled sample PDF, no account or API key needed.')
+    st.info('Ask about prior authorization, timely filing limits, denial codes, coordination of benefits, or required documents. Exact policy terms work best with local search.')
 
 
 def show_message(message):
@@ -105,15 +106,15 @@ def show_message(message):
         st.markdown(message['content'])
         if message.get('note'):
             st.caption(message['note'])
-        for source in message.get('sources', []):
-            with st.expander(f"[{source['id']}] {source['file']} (PDF p.{source['page']})"):
+        for i, source in enumerate(message.get('sources', []), 1):
+            with st.expander(f"[{i}] {source['file']} (PDF p.{source['page']})"):
+                st.caption('Physical PDF page, counted from 1.')
                 st.write(source['text'])
-                st.caption('Physical PDF page, counted from 1. Search relevance is not a confidence score.')
 
 for message in st.session_state.messages:
     show_message(message)
 
-question = st.chat_input('Ask about the schemes in your PDFs...', disabled=st.session_state.index is None, max_chars=1200)
+question = st.chat_input('Ask about the policies in your PDFs...', disabled=st.session_state.index is None, max_chars=1200)
 if question:
     question = question.strip()
     if question:
@@ -135,5 +136,5 @@ if question:
 if st.session_state.messages:
     # Explicit fields only: no API key, local paths or index internals in export.
     st.download_button('Download conversation (JSON)', json.dumps(st.session_state.messages, ensure_ascii=False, indent=2),
-                       file_name='uzhavan-chat.json', mime='application/json')
-st.caption('Research aid, not an official service. A PDF can be outdated. Confirm details with the issuing department. Each question is searched independently; repeat scheme names in follow-ups.')
+                       file_name='claimsdesk-chat.json', mime='application/json')
+st.caption('Research aid, not billing, medical, or legal advice. A PDF can be outdated. Confirm details with the payer\'s current policy. Each question is searched independently; repeat policy names in follow-ups.')
